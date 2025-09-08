@@ -1,3 +1,4 @@
+---
 name: CI Build & GitOps Update
 
 on:
@@ -37,4 +38,4 @@ jobs:
           git config user.name "ci-bot"
           git add deploy/values.yaml
           git commit -m "Update image to ${GITHUB_SHA}" || echo "No changes to commit"
-          git push origin HEAD:${GITHUB_REF}
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} HEAD:${GITHUB_REF}
