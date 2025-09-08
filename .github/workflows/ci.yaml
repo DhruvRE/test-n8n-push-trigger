@@ -32,6 +32,14 @@ jobs:
           # Update values.yaml with new image tag
           sed -i "s|tag:.*|tag: ${GITHUB_SHA}|" deploy/values.yaml
 
+      - name: Debug Git remote
+        run: git remote -v
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+
       - name: Commit & Push manifest changes
         run: |
           git config user.email "ci-bot@example.com"
