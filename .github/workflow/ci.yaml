@@ -1,0 +1,40 @@
+name: CI Build & GitOps Update
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build & Push Docker Image
+        run: |
+          IMAGE=docker.io/${{ secrets.DOCKER_USERNAME }}/els-ci-test:${GITHUB_SHA}
+          echo "Building $IMAGE"
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+          # Update values.yaml with new image tag
+          sed -i "s|tag:.*|tag: ${GITHUB_SHA}|" deploy/values.yaml
+
+      - name: Commit & Push manifest changes
+        run: |
+          git config user.email "ci-bot@example.com"
+          git config user.name "ci-bot"
+          git add deploy/values.yaml
+          git commit -m "Update image to ${GITHUB_SHA}" || echo "No changes to commit"
+          git push origin HEAD:${GITHUB_REF}

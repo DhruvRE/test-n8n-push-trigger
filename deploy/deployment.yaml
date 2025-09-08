@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: els-ci-test
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: els-ci-test
+  template:
+    metadata:
+      labels:
+        app: els-ci-test
+    spec:
+      containers:
+        - name: els-ci-test
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 3000

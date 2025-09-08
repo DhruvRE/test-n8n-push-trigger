@@ -1,0 +1,4 @@
+image:
+  repository: dhruvre/els-ci-test
+  tag: latest
+namespace: dhruvre

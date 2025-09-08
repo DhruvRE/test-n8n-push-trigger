@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: els-ci-test-service
+  namespace: { { .Values.namespace } }
+spec:
+  type: ClusterIP
+  selector:
+    app: els-ci-test
+  ports:
+    - port: 80
+      targetPort: 3000
