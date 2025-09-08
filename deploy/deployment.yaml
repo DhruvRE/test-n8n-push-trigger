@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: els-ci-test
-  namespace: {{ .Values.namespace }}
+  namespace: { { .Values.namespace } }
 spec:
   replicas: 1
   selector:
@@ -15,6 +15,18 @@ spec:
     spec:
       containers:
         - name: els-ci-test
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
-            - containerPort: 3000
+            - containerPort: { { .Values.service.port } }
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: { { .Values.service.port } }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: { { .Values.service.port } }
+            initialDelaySeconds: 10
+            periodSeconds: 10
