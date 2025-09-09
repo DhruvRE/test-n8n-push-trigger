@@ -80,4 +80,5 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "ci: update image to ${GITHUB_SHA}"
-            git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main
+            git push "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}" main
+          fi

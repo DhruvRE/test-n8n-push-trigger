@@ -1,0 +1,32 @@
+# Node modules (install inside the container instead)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git
+.gitignore
+
+# Pact files (if you don’t want to include generated pacts in the image)
+pacts
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# VSCode / IDE files
+.vscode
+.idea
+
+# Coverage reports
+coverage
+.nyc_output
