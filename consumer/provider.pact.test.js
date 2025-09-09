@@ -16,16 +16,20 @@ describe("Pact Verification", () => {
     try {
       const opts = {
         provider: "expressservice",
-        providerBaseUrl: "http://localhost:4000",
+        providerBaseUrl: "http://127.0.0.1:4000",
         pactUrls: [
           path.resolve(process.cwd(), "pacts/frontendapp-expressservice.json"),
         ],
         publishVerificationResult: !!process.env.PACT_BROKER_BASE_URL, // publish only if broker URL set
         providerVersion: process.env.GITHUB_SHA || `dev-${Date.now()}`,
         tags: [process.env.GITHUB_REF_NAME || "main"],
-        pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,
         logLevel: "INFO",
       };
+
+      // Only add pactBrokerUrl if it's defined
+      if (process.env.PACT_BROKER_BASE_URL) {
+        opts.pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
+      }
 
       const output = await new Verifier(opts).verifyProvider();
       console.log("✅ Pact Verification Result:", output);
