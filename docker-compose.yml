@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: pact
+      POSTGRES_PASSWORD: pact
+      POSTGRES_DB: pact_broker
+    volumes:
+      - pact-broker-db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    environment:
+      # Database connection
+      PACT_BROKER_DATABASE_USERNAME: pact
+      PACT_BROKER_DATABASE_PASSWORD: pact
+      PACT_BROKER_DATABASE_HOST: postgres
+      PACT_BROKER_DATABASE_NAME: pact_broker
+      PACT_BROKER_DATABASE_PORT: 5432
+      # Public base url (change for your domain)
+      PACT_BROKER_BASE_URL: http://localhost:9292
+    ports:
+      - "9292:9292"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  pact-broker-db:

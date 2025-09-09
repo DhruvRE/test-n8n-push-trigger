@@ -1,0 +1,48 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Pact files (you may want to commit them if you want versioned Pacts)
+pacts/*.json
+
+# Jest / Test coverage
+coverage/
+jest-report.xml
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build / dist folders
+dist/
+build/
+
+# Docker
+*.dockerfile
+docker-compose.override.yml
+*.tgz
+
+# CI / temporary files
+*.tmp
+*.bak
+*.swp
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# GitHub Actions caches
+.cache/

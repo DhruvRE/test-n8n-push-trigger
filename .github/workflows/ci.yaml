@@ -1,4 +1,3 @@
----
 name: CI Build & GitOps Update
 
 on:
@@ -6,14 +5,49 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
+  test-and-build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Consumer Pact Tests
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: npm run test:consumer
+
+      - name: Run Provider Pact Tests
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: npm run test:provider
+
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+      # --- Docker Build ---
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
@@ -23,27 +57,27 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Build & Push Docker Image
+        env:
+          IMAGE_NAME: docker.io/${{ secrets.DOCKER_USERNAME }}/els-ci-test
         run: |
-          IMAGE=docker.io/${{ secrets.DOCKER_USERNAME }}/els-ci-test:${GITHUB_SHA}
-          echo "Building $IMAGE"
-          docker build -t $IMAGE .
-          docker push $IMAGE
-
-          # Update values.yaml with new image tag
+          IMAGE=${IMAGE_NAME}:${GITHUB_SHA}
+          echo "Building ${IMAGE}"
+          docker build -t "${IMAGE}" .
+          docker push "${IMAGE}"
           sed -i "s|tag:.*|tag: ${GITHUB_SHA}|" deploy/values.yaml
-
-      - name: Debug Git remote
-        run: git remote -v
-
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
+          echo "Updated deploy/values.yaml:"
+          sed -n '1,120p' deploy/values.yaml || true
 
       - name: Commit & Push manifest changes
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
+          set -e
           git config user.email "ci-bot@example.com"
           git config user.name "ci-bot"
           git add deploy/values.yaml
-          git commit -m "Update image to ${GITHUB_SHA}" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} main --force
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "ci: update image to ${GITHUB_SHA}"
+            git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main

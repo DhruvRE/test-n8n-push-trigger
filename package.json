@@ -3,9 +3,24 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "test:consumer": "jest consumer/consumer.pact.test.js --runInBand",
+    "test:provider": "jest consumer/provider.pact.test.js --runInBand",
+    "test:unit": "jest ./index.test.js --runInBand",
+    "test": "npm run test:consumer && npm run test:provider && npm run test:unit",
+    "publish:pacts": "node ./scripts/publish-pacts.js",
     "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "description": "hi # dhruvrathore11-els-repo # test trigger",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@pact-foundation/pact": "^15.0.1",
+    "@pact-foundation/pact-node": "^10.18.0",
+    "jest": "^30.1.3",
+    "supertest": "^7.1.4"
   }
 }
