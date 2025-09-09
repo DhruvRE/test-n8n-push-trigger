@@ -8,31 +8,37 @@ const { publishPacts } = require("@pact-foundation/pact-node");
 const pactDir = path.resolve(process.cwd(), "pacts");
 if (!fs.existsSync(pactDir)) fs.mkdirSync(pactDir);
 
+// Ensure logs directory exists
+const logsDir = path.resolve(process.cwd(), "logs");
+if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir);
+
 describe("Pact with expressservice", () => {
   const provider = new Pact({
     consumer: "frontendapp",
     provider: "expressservice",
     port: 1234,
     dir: pactDir,
-    log: path.resolve(process.cwd(), "logs", "pact.log"),
+    log: path.join(logsDir, "pact.log"),
     logLevel: "INFO",
     spec: 3,
   });
 
   beforeAll(async () => {
     await provider.setup();
+    // Small delay to ensure server is fully ready in CI
+    await new Promise((resolve) => setTimeout(resolve, 100));
   });
 
   afterAll(async () => {
     try {
-      // Ensure all interactions were called
+      // Verify all interactions
       await provider.verify();
 
-      // Write Pact file
+      // Finalize and write Pact file
       await provider.finalize();
       console.log("✅ Pact file created in:", pactDir);
 
-      // Publish if broker URL is set
+      // Publish Pact if broker URL is set
       if (process.env.PACT_BROKER_BASE_URL) {
         await publishPacts({
           pactFilesOrDirs: [pactDir],
@@ -64,8 +70,7 @@ describe("Pact with expressservice", () => {
     });
 
     it("returns correct response", async () => {
-      // Hit the mock server so interaction is fulfilled
-      const res = await axios.get("http://localhost:1234/health");
+      const res = await axios.get("http://127.0.0.1:1234/health");
       expect(res.data).toEqual({ status: "ok", message: "healthy" });
     });
   });
