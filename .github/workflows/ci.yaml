@@ -8,14 +8,17 @@ jobs:
   test-and-build:
     runs-on: ubuntu-latest
     steps:
+      # --- Checkout ---
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # --- Node.js Setup ---
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
 
+      # --- Cache ---
       - name: Cache node modules
         uses: actions/cache@v4
         with:
@@ -24,9 +27,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      # --- Install Dependencies ---
       - name: Install Dependencies
         run: npm ci
 
+      # --- Pact Consumer Tests ---
       - name: Run Consumer Pact Tests
         env:
           PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
@@ -35,6 +40,7 @@ jobs:
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: npm run test:consumer
 
+      # --- Pact Provider Tests ---
       - name: Run Provider Pact Tests
         env:
           PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
@@ -43,6 +49,7 @@ jobs:
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: npm run test:provider
 
+      # --- Unit Tests ---
       - name: Run Unit Tests
         run: npm run test:unit
 
@@ -64,19 +71,27 @@ jobs:
           echo "Building ${IMAGE}"
           docker build -t "${IMAGE}" .
           docker push "${IMAGE}"
+          # Update Helm values.yaml with the new image tag
           sed -i "s|tag:.*|tag: ${GITHUB_SHA}|" deploy/values.yaml
           echo "Updated deploy/values.yaml:"
-          sed -n '1,120p' deploy/values.yaml || true
+          head -n 20 deploy/values.yaml || true
 
+      # --- Commit & Push manifest changes safely ---
       - name: Commit & Push manifest changes
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           set -e
           git config user.email "ci-bot@example.com"
           git config user.name "ci-bot"
+          git checkout main
+          # Pull latest main with rebase to avoid conflicts
+          git pull --rebase https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main
           git add deploy/values.yaml
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
+          if ! git diff --cached --quiet; then
             git commit -m "ci: update image to ${GITHUB_SHA}"
-            git push "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}" main
+            git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main
+          else
+            echo "No changes to commit"
           fi
