@@ -69,8 +69,6 @@ jobs:
           sed -n '1,120p' deploy/values.yaml || true
 
       - name: Commit & Push manifest changes
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -e
           git config user.email "ci-bot@example.com"
@@ -80,5 +78,5 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "ci: update image to ${GITHUB_SHA}"
-            git push "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}" main
+            git push "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}" main
           fi
