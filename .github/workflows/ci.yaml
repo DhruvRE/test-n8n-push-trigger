@@ -11,6 +11,8 @@ jobs:
       # --- Checkout Code ---
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false # Use PAT for pushing
 
       # --- Node.js Setup ---
       - name: Set up Node.js
@@ -80,7 +82,6 @@ jobs:
           set -e
           git config user.email "ci-bot@example.com"
           git config user.name "ci-bot"
-          git checkout main
 
           # Stage changes
           git add deploy/values.yaml
@@ -92,8 +93,8 @@ jobs:
             echo "No changes to commit"
           fi
 
-          # Pull latest main with rebase and autostash
+          # Pull latest main with rebase and autostash using PAT
           git pull --rebase --autostash https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main
 
-          # Push safely
+          # Push using PAT
           git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main
