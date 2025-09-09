@@ -1,6 +1,6 @@
 image:
   repository: dhruvre/els-ci-test
-  tag: 2e30b2da9520f6d8a070b495a934bd349009a973
+  tag: e2914de0cfb0139c27f4e49e0794f2f2f1291e49
 namespace: dhruvre
 service:
   type: ClusterIP
